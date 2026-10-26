@@ -7,7 +7,7 @@ module LIVR
           return if is_no_value(value)
           return 'FORMAT_ERROR' if !is_primitive(value)
 
-          value_int = Integer(value.to_s) rescue nil
+          value_int = to_integer(value)
           if value_int.nil?
             return "NOT_INTEGER"
           end
@@ -23,7 +23,7 @@ module LIVR
           return if is_no_value(value)
           return 'FORMAT_ERROR' if !is_primitive(value)
 
-          value_int = Integer(value.to_s) rescue nil
+          value_int = to_integer(value)
 
           return "NOT_POSITIVE_INTEGER" if value_int.nil?
           return "NOT_POSITIVE_INTEGER" unless value_int.positive?
@@ -70,7 +70,7 @@ module LIVR
           return if is_no_value(value)
           return 'FORMAT_ERROR' if !is_primitive(value)
 
-          value = Float(value.to_s) rescue nil
+          value = to_number(value)
           if value.nil?
             return "NOT_NUMBER"
           end
@@ -93,7 +93,7 @@ module LIVR
           return if is_no_value(value)
           return 'FORMAT_ERROR' if !is_primitive(value)
 
-          value = Float(value.to_s) rescue nil
+          value = to_number(value)
           if value.nil?
             return "NOT_NUMBER"
           end
@@ -117,7 +117,7 @@ module LIVR
           return if is_no_value(value)
           return 'FORMAT_ERROR' if !is_primitive(value)
 
-          value = Float(value.to_s) rescue nil
+          value = to_number(value)
           if value.nil?
             return "NOT_NUMBER"
           end

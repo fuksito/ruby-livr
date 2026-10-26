@@ -55,7 +55,8 @@ module LIVR
           return 'FORMAT_ERROR' if !is_primitive(value)
 
           value = value.to_s
-          return "WRONG_DATE" unless value.length == "YYYY-MM-DD".length
+          # Date.strptime alone accepts "2020-01-1x" and "+020-01-01"
+          return "WRONG_DATE" unless value =~ /\A\d{4}-\d{2}-\d{2}\z/
 
           date = Date.strptime(value, '%Y-%m-%d') rescue nil
           unless date

@@ -4,8 +4,7 @@ module LIVR
 
       class Required < Rule
         def call(value, user_data, field_results)
-          return if value.in?([[], {}])
-          "REQUIRED" if value.blank?
+          "REQUIRED" if is_no_value(value)
         end
       end
 
