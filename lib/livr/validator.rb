@@ -3,7 +3,7 @@ module LIVR
     def initialize(rules, is_auto_trim=false)
       @rules = rules
       @is_prepared = false
-      @validator_builders = {}
+      @validator_builders = {}.with_indifferent_access
       @validators = {}
       @is_auto_trim = is_auto_trim
 
