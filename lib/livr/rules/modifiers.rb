@@ -16,24 +16,24 @@ module LIVR
 
       class Trim < Rule
         def call(value, user_data, field_results)
-          return if is_no_value(value) || value.is_a?(Hash)
-          field_results << value.to_s.mb_chars.strip
+          return if is_no_value(value) || value.is_a?(Hash) || value.is_a?(Array)
+          field_results << value.to_s.strip
           return
         end
       end
 
       class ToLc < Rule
         def call(value, user_data, field_results)
-          return if is_no_value(value) || value.is_a?(Hash)
-          field_results << value.to_s.mb_chars.downcase
+          return if is_no_value(value) || value.is_a?(Hash) || value.is_a?(Array)
+          field_results << value.to_s.downcase
           return
         end
       end
 
       class ToUc < Rule
         def call(value, user_data, field_results)
-          return if is_no_value(value) || value.is_a?(Hash)
-          field_results << value.to_s.mb_chars.upcase
+          return if is_no_value(value) || value.is_a?(Hash) || value.is_a?(Array)
+          field_results << value.to_s.upcase
           return
         end
       end
@@ -45,8 +45,8 @@ module LIVR
         end
 
         def call(value, user_data, field_results)
-          return if is_no_value(value) || value.is_a?(Hash)
-          field_results << value.to_s.mb_chars.gsub(@re, '')
+          return if is_no_value(value) || value.is_a?(Hash) || value.is_a?(Array)
+          field_results << value.to_s.gsub(@re, '')
           return
         end
       end
@@ -58,8 +58,8 @@ module LIVR
         end
 
         def call(value, user_data, field_results)
-          return if is_no_value(value) || value.is_a?(Hash)
-          field_results << value.to_s.mb_chars.gsub(@re, '')
+          return if is_no_value(value) || value.is_a?(Hash) || value.is_a?(Array)
+          field_results << value.to_s.gsub(@re, '')
           return
         end
       end

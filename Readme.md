@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/fuksito/ruby-livr.svg?branch=master)](https://travis-ci.org/fuksito/ruby-livr)
+[![test](https://github.com/fuksito/ruby-livr/actions/workflows/test.yml/badge.svg)](https://github.com/fuksito/ruby-livr/actions/workflows/test.yml)
 
 # LIVR Validator
 LIVR.Validator - Lightweight validator supporting Language Independent Validation Rules Specification (LIVR)

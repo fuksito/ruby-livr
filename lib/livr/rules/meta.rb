@@ -4,10 +4,15 @@ module LIVR
 
       class NestedObject < Rule
         def initialize(livr)
-          @validator = Validator.new(livr).prepare
+          @livr = livr
+        end
+
+        def rule_builders=(rule_builders)
+          @validator = Validator.new(@livr).register_rules(rule_builders).prepare
         end
 
         def call(nested_object, user_data, field_results)
+          self.rule_builders = {} unless @validator # built outside of a validator: default rules only
           return if is_no_value(nested_object)
           return 'FORMAT_ERROR' unless nested_object.is_a?(Hash)
 
@@ -25,13 +30,18 @@ module LIVR
       class VariableObject < Rule
         def initialize(selector_field, livrs)
           @selector_field = selector_field
+          @livrs = livrs
+        end
+
+        def rule_builders=(rule_builders)
           @validators = {}
-          livrs.each do |selector_value, livr|
-            @validators[selector_value] = Validator.new(livr).prepare
+          @livrs.each do |selector_value, livr|
+            @validators[selector_value] = Validator.new(livr).register_rules(rule_builders).prepare
           end
         end
 
         def call(object, user_data, field_results)
+          self.rule_builders = {} unless @validators # built outside of a validator: default rules only
           return if is_no_value(object)
           if ( !object.is_a?(Hash) || !object[@selector_field] || !@validators[ object[@selector_field] ] )
             return 'FORMAT_ERROR'
@@ -51,11 +61,15 @@ module LIVR
 
       class ListOf < Rule
         def initialize(*rules)
-          livr = { field: rules.flatten }
-          @validator = Validator.new(livr).prepare
+          @livr = { field: rules.flatten }
+        end
+
+        def rule_builders=(rule_builders)
+          @validator = Validator.new(@livr).register_rules(rule_builders).prepare
         end
 
         def call(values, user_data, field_results)
+          self.rule_builders = {} unless @validator # built outside of a validator: default rules only
           return if is_no_value(values)
           return 'FORMAT_ERROR' unless values.is_a?(Array)
 
@@ -87,10 +101,15 @@ module LIVR
 
       class ListOfObjects < Rule
         def initialize(livr)
-          @validator = Validator.new(livr).prepare
+          @livr = livr
+        end
+
+        def rule_builders=(rule_builders)
+          @validator = Validator.new(@livr).register_rules(rule_builders).prepare
         end
 
         def call(objects, user_data, field_results)
+          self.rule_builders = {} unless @validator # built outside of a validator: default rules only
           return if is_no_value(objects)
           return 'FORMAT_ERROR' unless objects.is_a?(Array)
 
@@ -124,13 +143,18 @@ module LIVR
       class ListOfDifferentObjects < Rule
         def initialize(selector_field, livrs)
           @selector_field = selector_field
+          @livrs = livrs
+        end
+
+        def rule_builders=(rule_builders)
           @validators = {}
-          livrs.each do |selector_value, livr|
-            @validators[selector_value] = Validator.new(livr).prepare
+          @livrs.each do |selector_value, livr|
+            @validators[selector_value] = Validator.new(livr).register_rules(rule_builders).prepare
           end
         end
 
         def call(objects, user_data, field_results)
+          self.rule_builders = {} unless @validators # built outside of a validator: default rules only
           return if is_no_value(objects)
           return 'FORMAT_ERROR' unless objects.is_a?(Array)
 
@@ -140,6 +164,7 @@ module LIVR
 
           objects.each do |object|
             if !object.is_a?(Hash) || !object[@selector_field] || !@validators[ object[@selector_field] ]
+              has_errors = true
               errors << 'FORMAT_ERROR'
               next
             end
@@ -170,20 +195,26 @@ module LIVR
       class Or < Rule
         def initialize(*rule_sets)
           @rule_sets = rule_sets
+        end
+
+        def rule_builders=(rule_builders)
           @validators = @rule_sets.map do |rules|
             livr = { field: rules }
-            Validator.new(livr).prepare
+            Validator.new(livr).register_rules(rule_builders).prepare
           end
         end
 
         def call(value, user_data, field_results)
-          return if is_no_value(value)
+          self.rule_builders = {} unless @validators # built outside of a validator: default rules only
+          # Empty and missing values go to the rule sets too ("required" can be one of them).
+          # A missing value stays missing, unless a rule set changes it.
+          input = value.nil? ? {} : { field: value }
 
           last_error = nil
           @validators.each do |validator|
-            result = validator.validate(field: value)
+            result = validator.validate(input)
             if result
-              field_results << result[:field]
+              field_results << result[:field] if result.has_key?(:field)
               return nil
             else
               last_error = validator.get_errors[:field]

@@ -1,5 +1,7 @@
 require 'json'
 require 'date'
+# activesupport 6.x uses Logger without loading it, which fails with concurrent-ruby 1.3.5 and later
+require 'logger'
 require 'active_support/all'
 
 require_relative "livr/validator.rb"

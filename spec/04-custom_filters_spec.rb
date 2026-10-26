@@ -50,5 +50,16 @@ RSpec.describe "custom_filters" do
                         )
   end
 
-end
+  it 'Validate data with rules registered with symbol names' do
+    validator = LIVR::Validator.new(
+      "word1" => ['my_trim2'],
+      "word2" => [{ my_trim2: [] }]
+    )
+    validator.register_rules(my_trim2: MyTrim)
 
+    output = validator.validate("word1" => ' wordOne ', "word2" => ' wordTwo ')
+
+    expect(output).to eq("word1" => 'wordOne', "word2" => 'wordTwo')
+  end
+
+end

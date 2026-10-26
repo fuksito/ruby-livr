@@ -5,9 +5,13 @@ def read_file(dir, filename)
   JSON.parse(data)
 end
 
+def read_aliases(dir)
+  dir.join("aliases.json").exist? ? read_file(dir, "aliases") : []
+end
+
 RSpec.describe "test_suite " do
 
-  %w[ positive negative ].each do |spec_dir|
+  %w[ positive negative aliases_positive aliases_negative ].each do |spec_dir|
     context spec_dir do
       dirs = Pathname.new("#{SPEC_ROOT}/test_suite/#{spec_dir}").children.select(&:directory?)
       dirs.each do |dir|
@@ -16,10 +20,11 @@ RSpec.describe "test_suite " do
           input = read_file(dir, "input")
 
           validator = LIVR::Validator.new(rules)
+          read_aliases(dir).each { |_alias| validator.register_aliased_rule(_alias) }
           result = validator.validate(input)
           errors = validator.get_errors
 
-          if spec_dir == 'positive'
+          if spec_dir.end_with?('positive')
             expected_result = read_file(dir, "output")
             expect(result).to eq(expected_result)
           else
