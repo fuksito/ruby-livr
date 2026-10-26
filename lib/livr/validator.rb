@@ -110,7 +110,12 @@ module LIVR
       if @validator_builders[name].blank?
         raise "Rule ['#{name}'] not registered"
       end
-      @validator_builders[name].new(*args)
+      validator = @validator_builders[name].new(*args)
+
+      # Meta rules and aliases validate with validators of their own. They get the rules
+      # of this validator, so that aliases and custom rules can be used inside them.
+      validator.rule_builders = @validator_builders if validator.respond_to?(:rule_builders=)
+      validator
     end
 
     private
