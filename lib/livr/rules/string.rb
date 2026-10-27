@@ -133,7 +133,7 @@ module LIVR
           return 'FORMAT_ERROR' unless is_primitive(value)
 
           value = value.to_s
-          regexp = Regexp.compile(@re_str, @flags)
+          regexp = Regexp.compile(whole_value_anchors(@re_str), @flags)
 
           unless regexp.match(value)
             return 'WRONG_FORMAT'
@@ -142,6 +142,56 @@ module LIVR
           field_results << value
 
           return
+        end
+
+        private
+
+        # LIVR patterns follow JavaScript, where ^ and $ anchor the whole value. In Ruby
+        # they anchor any line, so "12345\n<script>" would match "^[0-9]{5}$".
+        # Replaces ^ and $ outside character classes with \A and \z.
+        def whole_value_anchors(re_str)
+          result = +""
+          class_depth = 0
+          chars = re_str.to_s.chars
+          i = 0
+
+          while i < chars.size
+            char = chars[i]
+
+            if char == "\\"
+              result << char << chars[i + 1].to_s
+              i += 2
+              next
+            end
+
+            if class_depth > 0
+              class_depth += 1 if char == "["
+              class_depth -= 1 if char == "]"
+              result << char
+            elsif char == "["
+              class_depth = 1
+              result << char
+              # "]" right after "[" or "[^" is a literal, not the end of the class
+              if chars[i + 1] == "^"
+                result << chars[i + 1]
+                i += 1
+              end
+              if chars[i + 1] == "]"
+                result << chars[i + 1]
+                i += 1
+              end
+            elsif char == "^"
+              result << "\\A"
+            elsif char == "$"
+              result << "\\z"
+            else
+              result << char
+            end
+
+            i += 1
+          end
+
+          result
         end
       end
 
