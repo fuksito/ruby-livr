@@ -1,6 +1,6 @@
 Gem::Specification.new do |gem|
   gem.name        = "ruby-livr"
-  gem.version     = "2.1.0"
+  gem.version     = "2.1.1"
   gem.summary     = "Implementation of LIVR v2.0"
   gem.description = "Language Independent Validation Rules. Implements 2.0 specification"
   gem.authors     = ["Vitaliy Yanchuk"]
