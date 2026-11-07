@@ -11,7 +11,9 @@ module LIVR
     end
 
     def self.register_default_rules(rules)
-      @@default_rules ||= {}
+      # With indifferent access, like the rules of a validator: every validator (and every validator
+      # of a meta rule) merges them without converting the keys again
+      @@default_rules ||= {}.with_indifferent_access
       @@default_rules.merge!(rules.with_indifferent_access)
     end
 
@@ -75,6 +77,31 @@ module LIVR
       end
     end
 
+    # Validates a value with the rules of a field, for meta rules and aliases: the rules see
+    # user_data as the fields next to the value (LIVR 2.5, the containing object). Returns the
+    # error code, or nil and puts the output into field_results. A missing (nil) value stays
+    # missing, unless the rules change it
+    def validate_field(field, value, user_data, field_results)
+      prepare unless @is_prepared
+
+      output = value
+      is_changed = false
+
+      @validators.fetch(field).each do |validator|
+        results = []
+        error_code = validator.call(output, user_data, results)
+        return error_code if error_code
+
+        unless results.empty?
+          output = results.first
+          is_changed = true
+        end
+      end
+
+      field_results << output if is_changed || !value.nil?
+      nil
+    end
+
     def register_rules(rules)
       @validator_builders.merge!(rules)
       self
@@ -97,7 +124,10 @@ module LIVR
       case livr_rule
       when Hash
         name = livr_rule.keys.first
-        args = Array.wrap(livr_rule[name])
+        args = livr_rule[name]
+        # LIVR 2.5: {"rule" => nil} is one nil argument, a schema error for the new rules.
+        # The LIVR 2.0 rules (iso_date too) and custom rules get no arguments, as in 2.0
+        args = args.nil? && LIVR_2_5_RULES.value?(@validator_builders[name]) ? [nil] : Array.wrap(args)
       else
         name = livr_rule
         args = []

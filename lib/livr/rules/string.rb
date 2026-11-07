@@ -14,7 +14,7 @@ module LIVR
       end
 
       class Eq < Rule
-        def initialize(allowed_value)
+        def initialize(allowed_value, *)
           @allowed_value = allowed_value
         end
 
@@ -52,7 +52,7 @@ module LIVR
       end
 
       class MaxLength < Rule
-        def initialize(max_length)
+        def initialize(max_length, *)
           @max_length = max_length
         end
 
@@ -67,7 +67,7 @@ module LIVR
       end
 
       class MinLength < Rule
-        def initialize(min_length)
+        def initialize(min_length, *)
           @min_length = min_length
         end
 
@@ -84,7 +84,7 @@ module LIVR
       end
 
       class LengthEqual < Rule
-        def initialize(length)
+        def initialize(length, *)
           @length = length
         end
 
@@ -103,7 +103,7 @@ module LIVR
       end
 
       class LengthBetween < Rule
-        def initialize(min_length, max_length)
+        def initialize(min_length, max_length, *)
           @min_length = min_length
           @max_length = max_length
         end
@@ -123,7 +123,7 @@ module LIVR
       end
 
       class Like < Rule
-        def initialize(re_str, flags=nil)
+        def initialize(re_str, flags=nil, *)
           @re_str = re_str
           @flags = flags
         end
@@ -193,6 +193,77 @@ module LIVR
 
           result
         end
+      end
+
+      # LIVR 2.5: the value must not equal any of the arguments, compared as strings
+      class NotOneOf < Rule
+        def initialize(*forbidden_values)
+          if forbidden_values.empty? || !forbidden_values.all? { |v| is_primitive(v) }
+            raise "Rule [not_one_of] takes one or more strings, numbers or booleans"
+          end
+          @forbidden_values = forbidden_values.map { |v| string_form(v) }
+        end
+
+        def call(value, user_data, field_results)
+          return if is_no_value(value)
+          return 'FORMAT_ERROR' unless is_primitive(value)
+
+          return 'NOT_ALLOWED_VALUE' if @forbidden_values.include?(string_form(value))
+        end
+      end
+
+      # LIVR 2.5: ASCII digits, leading zeros are kept
+      class Digits < Rule
+        def initialize(*args)
+          no_arguments("digits", args)
+        end
+
+        def call(value, user_data, field_results)
+          return if is_no_value(value)
+          return 'FORMAT_ERROR' unless is_primitive(value)
+
+          value = string_form(value)
+          return 'NOT_DIGITS' unless value.match?(/\A[0-9]+\z/)
+
+          field_results << value
+          return
+        end
+      end
+
+      # LIVR 2.5: starts_with, ends_with and contains check the string form with one or more strings
+      class Substring < Rule
+        def initialize(*strings)
+          @strings = strings.map { |str| string_argument(str) }
+          if @strings.empty? || @strings.any? { |str| str.nil? || str.empty? }
+            raise "Rule [#{rule_name}] takes one or more non-empty strings"
+          end
+        end
+
+        def call(value, user_data, field_results)
+          return if is_no_value(value)
+          return 'FORMAT_ERROR' unless is_primitive(value)
+
+          value = string_form(value)
+          return 'WRONG_FORMAT' unless @strings.any? { |str| matches?(value, str) }
+
+          field_results << value
+          return
+        end
+      end
+
+      class StartsWith < Substring
+        def rule_name; "starts_with"; end
+        def matches?(value, str); value.start_with?(str); end
+      end
+
+      class EndsWith < Substring
+        def rule_name; "ends_with"; end
+        def matches?(value, str); value.end_with?(str); end
+      end
+
+      class Contains < Substring
+        def rule_name; "contains"; end
+        def matches?(value, str); value.include?(str); end
       end
 
     end
