@@ -58,7 +58,9 @@ module LIVR
           # Date.strptime alone accepts "2020-01-1x" and "+020-01-01"
           return "WRONG_DATE" unless value =~ /\A\d{4}-\d{2}-\d{2}\z/
 
-          date = Date.strptime(value, '%Y-%m-%d') rescue nil
+          # The proleptic Gregorian calendar, as ISO 8601: by default Date uses the Julian
+          # calendar before 1582-10-15, where 1582-10-10 is not a date and 1500-02-29 is
+          date = Date.strptime(value, '%Y-%m-%d', Date::GREGORIAN) rescue nil
           unless date
             return "WRONG_DATE"
           end
