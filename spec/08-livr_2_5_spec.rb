@@ -231,6 +231,24 @@ RSpec.describe "LIVR 2.5" do
     expect { LIVR::Validator.new("date" => { "iso_date" => { "min" => "1500-02-29" } }).prepare }.to raise_error(RuntimeError)
   end
 
+  it "url: labels have at most 63 characters of any letters, the scheme and localhost are in any case" do
+    validator = LIVR::Validator.new("label" => "url", "tld" => "url", "unicode" => "url", "upper" => "url", "localhost" => "url")
+
+    valid = {
+      "label"     => "https://#{'s' * 63}.example.com/",
+      "tld"       => "https://example.#{'f' * 63}",
+      "unicode"   => "https://straße.de/",
+      "upper"     => "HTTPS://WWW.EXAMPLE.COM:8/",
+      "localhost" => "Http://LocalHost:65535"
+    }
+    expect(validator.validate(valid)).to eq(valid)
+
+    # "ss" and "ff" are two letters, not one (ß, ﬀ)
+    expect(validator.validate("label" => "https://#{'s' * 64}.example.com/", "tld" => "https://example.#{'f' * 64}",
+                              "upper" => "HTTPS://WWW.EXAMPLE.COM.")).to eq(false)
+    expect(validator.get_errors).to eq("label" => "WRONG_URL", "tld" => "WRONG_URL", "upper" => "WRONG_URL")
+  end
+
   it "unique with keys: an object or a list as a key value is a format error, also next to an empty key value" do
     validator = LIVR::Validator.new("items" => { "unique" => ["id", "name"] })
 

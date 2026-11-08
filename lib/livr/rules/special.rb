@@ -32,9 +32,26 @@ module LIVR
       end
 
       class Url < Rule
+        # Letters of host labels: Latin letters and U+00A1-U+FFFF, so Unicode hosts (пример.рф) pass.
+        # Both cases are listed instead of the "i" flag: with it a class matches "ss" or "ff" as one
+        # letter (ß, ﬀ), and labels would not be counted in characters
+        LETTER = 'a-zA-Z\u00a1-\uffff'
+
+        # 1-63 characters, not starting or ending with "-". "." is not in a label, so labels do not overlap
+        LABEL = "[#{LETTER}0-9](?:[#{LETTER}0-9-]{0,61}[#{LETTER}0-9])?"
+
+        # The first byte is 1-223, the last one is not 255
+        IPV4 = '(?:[1-9]\d?|1\d\d|2[0-1]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[0-9]\d?|1\d\d|2[0-4]\d|25[0-4]))'
+
+        # 0-65535 in 1-5 digits
+        PORT = '(?:[0-9]{1,4}|[0-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])'
+
+        # Optional user info, then an IPv4 address, labels with a top-level domain of 2-63 letters or
+        # localhost, no dot after the host. The scheme and localhost are case-insensitive.
         # \A and \z, not ^ and $: they match at line breaks in Ruby.
-        URL_RE_STR = '\\A(?:(?:http|https)://)(?:\\S+(?::\\S*)?@)?(?:(?:(?:[1-9]\\d?|1\\d\\d|2[0-1]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[0-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,})))\\.?|localhost)(?::\\d{2,5})?(?:[/?#]\\S*)?\\z'
-        URL_RE =  Regexp.compile(URL_RE_STR, "i")
+        URL_RE_STR = "\\A(?i:https?)://(?:\\S+@)?(?:#{IPV4}|(?:#{LABEL}\\.)+[#{LETTER}]{2,63}|(?i:localhost))" \
+                     "(?::#{PORT})?(?:[/?#]\\S*)?\\z"
+        URL_RE = Regexp.compile(URL_RE_STR)
         MAX_URL_LENGTH = 2083
 
         def call(value, user_data, field_results)

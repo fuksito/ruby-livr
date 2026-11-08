@@ -123,7 +123,9 @@ end
 LIVR 2.5 also fixes rules that refer to other fields (`equal_to_field` and your own rules): in an alias and in an
 `or` rule they see the fields next to the field, in an item of `list_of` they see no fields. In LIVR 2.0 they saw
 only the value itself. `iso_date` uses the proleptic Gregorian calendar, as ISO 8601: `1582-10-10` is a valid date
-and `1500-02-29` is not (earlier versions used the Julian calendar before October 1582).
+and `1500-02-29` is not (earlier versions used the Julian calendar before October 1582). `url` rejects a dot after
+the host (`https://example.com.`), host labels longer than 63 characters and ports above 65535, and accepts one-digit
+ports (`https://example.com:8`).
 
 # DESCRIPTION
 This ruby gem is an implementation of LIVR Specification.
