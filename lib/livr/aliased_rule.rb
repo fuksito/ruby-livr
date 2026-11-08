@@ -19,14 +19,9 @@ module LIVR
 
     def call(value, user_data, field_results)
       self.rule_builders = {} unless @validator # built outside of a validator: default rules only
-      # A missing value stays missing, unless the rules change it
-      result = @validator.validate(value.nil? ? {} : { value: value })
-      if result
-        field_results << result[:value] if result.has_key?(:value)
-        return
-      else
-        return @alias["error"] || @validator.get_errors[:value]
-      end
+      # Aliases are transparent: their rules see the fields next to the field that uses the alias
+      error_code = @validator.validate_field(:value, value, user_data, field_results)
+      @alias["error"] || error_code if error_code
     end
   end
 end

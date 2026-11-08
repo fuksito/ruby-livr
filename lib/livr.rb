@@ -7,12 +7,16 @@ require 'active_support/all'
 require_relative "livr/validator.rb"
 require_relative "livr/rule.rb"
 require_relative "livr/aliased_rule.rb"
+require_relative "livr/reference.rb"
 require_relative "livr/rules/common.rb"
 require_relative "livr/rules/string.rb"
 require_relative "livr/rules/numeric.rb"
 require_relative "livr/rules/special.rb"
 require_relative "livr/rules/modifiers.rb"
 require_relative "livr/rules/meta.rb"
+require_relative "livr/rules/list.rb"
+require_relative "livr/rules/format.rb"
+require_relative "livr/rules/checksum.rb"
 
 module LIVR
   DEFAULT_RULES = {
@@ -57,6 +61,54 @@ module LIVR
     list_of_different_objects: Rules::Meta::ListOfDifferentObjects,
     or:                        Rules::Meta::Or,
   }.with_indifferent_access
+
+  # Added in LIVR 2.5. {"rule" => nil} is one nil argument for them (a schema error), the rules
+  # above and custom rules get no arguments, as in LIVR 2.0
+  LIVR_2_5_RULES = {
+    boolean:     Rules::Common::Boolean,
+    any:         Rules::Common::Any,
+    required_if: Rules::Common::RequiredIf,
+
+    not_one_of:  Rules::String::NotOneOf,
+    digits:      Rules::String::Digits,
+    starts_with: Rules::String::StartsWith,
+    ends_with:   Rules::String::EndsWith,
+    contains:    Rules::String::Contains,
+
+    max_decimals: Rules::Numeric::MaxDecimals,
+
+    iso_datetime: Rules::Special::IsoDatetime,
+    iso_time:     Rules::Special::IsoTime,
+
+    split: Rules::Modifiers::Split,
+
+    when:   Rules::Meta::When,
+    values: Rules::Meta::Values,
+    keys:   Rules::Meta::Keys,
+
+    list_length: Rules::List::ListLength,
+    unique:      Rules::List::Unique,
+
+    uuid:      Rules::Format::Uuid,
+    ip:        Rules::Format::Ip,
+    cidr:      Rules::Format::Cidr,
+    hostname:  Rules::Format::Hostname,
+    base64:    Rules::Format::Base64,
+    hex:       Rules::Format::Hex,
+    digest:    Rules::Format::Digest,
+    mongo_id:  Rules::Format::MongoId,
+    hex_color: Rules::Format::HexColor,
+    mac:       Rules::Format::Mac,
+    e164:      Rules::Format::E164,
+    semver:    Rules::Format::Semver,
+    jwt:       Rules::Format::Jwt,
+
+    luhn:        Rules::Checksum::Luhn,
+    credit_card: Rules::Checksum::CreditCard,
+    iban:        Rules::Checksum::Iban,
+  }.with_indifferent_access
+
+  DEFAULT_RULES.merge!(LIVR_2_5_RULES)
 
   Validator.register_default_rules(DEFAULT_RULES)
 end
